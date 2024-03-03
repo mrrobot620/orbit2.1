@@ -6,7 +6,6 @@ from keras.preprocessing import image
 import numpy as np
 from concurrent.futures import ThreadPoolExecutor
 from PIL import Image
-import pickle
 
 
 class Pendency(models.Model):
@@ -26,7 +25,8 @@ class Pendency(models.Model):
     def save(self, *args, **kwargs):
         if self.image:
             features = self.extract_features(self.image)
-            self.features = pickle.dump(features)
+            if features is not None:
+                self.features = features.tobytes()
         self.name = self.tid
         super().save(*args, **kwargs)
 
