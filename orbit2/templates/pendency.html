@@ -1,0 +1,49 @@
+{% extends 'base.html' %} 
+{% block content %}
+
+<style>
+    .btn {
+        color: white;
+        background-color: #212529;
+        border-color: #212529;
+    }
+
+    #tracking_ids {
+        height: 200px;
+    }
+</style>
+
+<style type="text/css">
+  .bootstrap-tagsinput .tag {
+    margin-right: 2px;
+    color: white !important;
+    background-color: #0d6efd;
+    padding: 0.2rem;
+  }
+</style>
+
+<link
+href="https://cdnjs.cloudflare.com/ajax/libs/bootstrap-tagsinput/0.8.0/bootstrap-tagsinput.css"
+rel="stylesheet"
+/>
+
+<h1 class="mt-4"> Paste Pendency</h1>
+
+
+  <form method="POST" action="{% url 'add_pendency' %}">
+    {% csrf_token %}
+    <div class="top_margin">
+      <textarea
+        class="form-control"
+        name="tracking_ids"
+        id="tracking_ids"
+        data-role="tagsinput"
+      ></textarea>
+      <button class="btn btn-primary btn-lg mb-3 mt-3" type="submit">
+        Add Pendency
+      </button>
+    </div>
+  </form>
+  <script>
+  </script>
+{% endblock %}

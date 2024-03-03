@@ -1,0 +1,134 @@
+{% extends 'base.html' %}
+{% load static %}
+
+{% block content %}
+
+<style>
+        .btn {
+        background-color: #212529;
+        border-color: #212529;
+    }
+</style>
+<div class="container mt-4">
+    <div class="row">
+        <!-- Left Column (Input) -->
+        <div class="col-md-6">
+            <div class="card h-100 bg-light">
+                <div class="card-body">
+                    <form id="imageForm" method="post" enctype="multipart/form-data">
+                        {% csrf_token %}
+                        <div class="mb-4 d-flex justify-content-center">
+                            <img id="selectedImage" src="https://mdbootstrap.com/img/Photos/Others/placeholder.jpg"
+                                 alt="example placeholder" style="width: 300px;" />
+                        </div>
+
+                        <div class="mb-3">
+                            <label for="image" class="form-label">Select Image:</label>
+                            <input type="file" class="form-control" name="image" accept="image/*" onchange="displaySelectedImage(event, 'selectedImage')" required>
+                        </div>
+
+                        <button type="button" class="btn btn-primary" onclick="classifyImage()">Extract Attributes</button>
+                    </form>
+                </div>
+            </div>
+        </div>
+
+        <div class="col-md-6">
+            <div class="card h-100">
+                <div class="card-body bg-light">
+                    <form id="outputForm">
+                        <div id="result" style="display: none;">
+                            <h1 class="mb-3">Result: </h1>
+                            <h3 class="mb-3">Orphan ID: <span id="orphanIdPlaceholder">Here orphan_id</span> </h3>
+                            <h3 class="mb-3">Object Cateogry</h3>
+                            <div class="form-group mb-3">
+                                <input type="text" class="form-control" id="classificationResult" placeholder="Classification result" contenteditable="true">
+                            </div>
+                            <h3 class="mb-3">Dominant Colors:</h3>
+                            <div id="dominantColors" class="mb-3">f ik   \][PO  K INU]
+                                <!-- Color squares will be dynamically added here -->
+                            </div>
+
+                            <h3 class="mb-3">Description: </h3>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="extractedText" placeholder="Extracted text" contenteditable="true">
+                            </div>
+                            <h3 class="mb-3 mt-3">Brand:</h3>
+                            <div class="form-group">
+                                <input type="text" class="form-control" id="extractedText" placeholder="Brand Name" contenteditable="true">
+                            </div>
+                            <h3 class="mb-3 mt-3">High Value:</h3>
+                            <div>
+                                <select class="form-select mt-3 mb-3" aria-label="Default select example" name="CV" id="highvalue">
+                                    <option value="0">No</option>
+                                    <option value="1">Yes</option>
+                                </select>
+                            </div>
+                            <button type="button" class="btn btn-primary mb-3 mt-3"> Add Orphan</button>
+                        </div>
+                    </form>
+                </div>
+            </div>
+        </div>
+    </div>
+</div>
+
+
+<script src="https://code.jquery.com/jquery-3.6.4.min.js"></script>
+<script>
+    function classifyImage() {
+        var form = document.getElementById('imageForm');
+        var formData = new FormData(form);
+
+        fetch('/classify_image/', {
+            method: 'POST',
+            body: formData,
+        })
+        .then(response => response.json())
+        .then(data => {
+            document.getElementById('result').style.display = 'block';
+            document.getElementById('classificationResult').value = data.classification_result;
+
+            var dominantColorsDiv = document.getElementById('dominantColors');
+            dominantColorsDiv.innerHTML = '';
+            data.dominant_colors.forEach(color => {
+                var colorSquare = document.createElement('div');
+                colorSquare.classList.add('color-square');
+                colorSquare.style.backgroundColor = `rgb(${color})`; // Set actual color
+
+                var colorText = document.createElement('span');
+                colorText.innerText = `RGB: ${color}`;
+
+                colorSquare.appendChild(colorText);
+                dominantColorsDiv.appendChild(colorSquare);
+            });
+
+            document.getElementById('extractedText').value = data.extracted_text;
+
+            // Display Uploaded Image
+            var uploadedImage = document.getElementById('selectedImage');
+            uploadedImage.src = URL.createObjectURL(form.elements.image.files[0]);
+
+            document.getElementById('orphanIdPlaceholder').innerText = data.orphan_id;
+
+        })
+        .catch(error => console.error('Error:', error));
+    }
+
+    function displaySelectedImage(event, elementId) {
+        const selectedImage = document.getElementById(elementId);
+        const fileInput = event.target;
+
+        if (fileInput.files && fileInput.files[0]) {
+            const reader = new FileReader();
+
+            reader.onload = function(e) {
+                selectedImage.src = e.target.result;
+            };
+
+            reader.readAsDataURL(fileInput.files[0]);
+        }
+    }
+</script>
+{% endblock %}
+

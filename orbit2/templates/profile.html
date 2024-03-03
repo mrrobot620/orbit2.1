@@ -1,0 +1,21 @@
+{% extends 'base.html' %}
+
+{% block content %}
+
+<div class="container mt-5">
+    <div class="row d-flex justify-content-center">
+        <div class="col-md-7">
+            <div class="text-center">
+                <img src="{{ user.profile.image.url }}" width="300" class="rounded-circle" alt="{{ user.username }} profile image">
+            </div>
+            
+            <div class="text-center mt-3">
+                <h1 class="mt-2 mb-0">{{ user.username }}</h1>
+                <p class="lead">{{ user.email }}</p>
+                <p class="text-muted">{{ user.profile.casper_id }}</p>
+            </div>
+        </div>
+    </div>
+</div>
+
+{% endblock %}

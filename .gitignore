@@ -1,0 +1,33 @@
+# Ignore compiled binaries
+*.o
+*.out
+*.exe
+
+# Ignore temporary files
+*.tmp
+*.log
+
+# Ignore OS-specific files
+.DS_Store
+Thumbs.db
+
+# Ignore the "media" folder
+/media/
+
+# Ignore user-specific files
+*.iml
+*.idea/
+
+# Ignore virtual environment folders (e.g., for Python)
+venv/
+env/
+
+# Ignore dependencies folder
+node_modules/
+
+# Ignore package-lock files
+package-lock.json
+yarn.lock
+
+
+/Users/abhishekrajput/Desktop/orbit/media

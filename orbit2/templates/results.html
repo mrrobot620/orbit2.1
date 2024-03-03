@@ -1,0 +1,199 @@
+{% extends 'base.html' %}
+
+{% block content %}
+<style>
+    .card:hover {
+        transform: scale(1.02);
+        transition: transform 0.3s ease;
+    }
+
+    .card {
+        text-decoration: none;
+        color: black;
+    }
+
+    .card img {
+        transition: filter 0.3s ease;
+        max-height: 300px; /* Adjust the maximum height of the images */
+        object-fit: cover; /* Ensure the images cover the entire container */
+    }
+
+    .card-body {
+        height: 100%; /* Occupy the full height of the card body */
+        display: flex;
+        flex-direction: column;
+        justify-content: space-between;
+    }
+
+    .card-text {
+        margin-bottom: 10px; /* Add some spacing between text elements */
+    }
+
+    .center-cards {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        height: 65vh;
+    }
+
+    .center-button {
+        display: flex;
+        justify-content: center;
+        align-items: center;
+        margin-top: 20px;
+    }
+
+    .btn {
+        background-color: #212529;
+        border-color: #212529;
+    }
+
+    .modal-content {
+        max-width: 800px; /* Adjust the maximum width of the modal content */
+    }
+</style>
+
+<body>
+    <a href="{% url 'search' %}" class="btn btn-primary mb-3">Back to Search</a>
+    {% if results %}
+    <div class="row">
+        {% for result in results %}
+        <div class="col-md-6">
+            <div class="card mb-3" data-toggle="modal" data-target="#detailsModal" data-tid="{{ result.tid }}">
+                <div class="row no-gutters">
+                    <div class="col-md-6">
+                        <img src="/media/uploaded_images/{{ result.uploaded_image_name }}" class="card-img img-fluid"
+                            alt="Uploaded Image">
+                        <div class="card-body">
+                            <p class="card-text"><strong>Uploaded Image</strong></p>
+                        </div>
+                    </div>
+                    <div class="col-md-6">
+                        <img src="/media/{{ result.pendency_image_name }}" class="card-img img-fluid"
+                            alt="Pendency Image">
+                        <div class="card-body">
+                            <p class="card-text"><strong>Pendency Image</strong></p>
+                        </div>
+                    </div>
+                </div>
+                <div class="card-body">
+                    <p class="card-text"><strong>TID:</strong> {{ result.tid }}</p>
+                    <p class="card-text"><strong>PID:</strong> {{ result.pid }}</p>
+                    <p class="card-text"><strong>Similarity:</strong> {{ result.similarity }}%</p>
+                </div>
+            </div>
+        </div>
+        {% endfor %}
+    </div>
+    {% else %}
+    <p class="mt-4">No Results Found!</p>
+    {% endif %}
+
+    <!-- Modal for displaying details -->
+    <div class="modal fade" id="detailsModal" tabindex="-1" role="dialog" aria-labelledby="detailsModalLabel"
+    aria-hidden="true">
+    <div class="modal-dialog modal-lg" role="document">
+        <div class="modal-content">
+            <div class="modal-header">
+                <h5 class="modal-title" id="detailsModalLabel">Details</h5>
+            </div>
+            <div class="modal-body">
+                <div class="row">
+                    <div class="col-md-6">
+                        <img src="" id="pendencyImage" class="img-fluid" alt="Pendency Image">
+                    </div>
+                </div>
+                <hr>
+                <p><strong>TID:</strong> <span id="modalTID"></span></p>
+                <p><strong>PID:</strong> <span id="modalPID"></span></p>
+                <p><strong>Description:</strong> <span id="modalDescription"></span></p>
+                <p><strong>Color:</strong> <span id="modalColor"></span></p>
+                <p><strong>Brand:</strong> <span id="modalBrand"></span></p>
+
+                <form method="post" action="{% url 'reconcile_search_history' %}">
+                    {% csrf_token %}
+                    <input type="hidden" name="uuid" value="{{ uuid }}">
+                    <input type="hidden" id="reconcileTID" name="tid" value="">
+                    <button class="btn btn-primary" type="submit">Reconcile</button>
+                </form>
+
+
+                <!-- Add more details as needed -->
+            </div>
+        </div>
+    </div>
+</div>
+
+    <script src="https://code.jquery.com/jquery-3.3.1.min.js"></script>
+    <script src="https://cdnjs.cloudflare.com/ajax/libs/popper.js/1.14.7/umd/popper.min.js"></script>
+    <script src="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/js/bootstrap.min.js"></script>
+
+    <script>
+        $(document).ready(function () {
+            // Function to show details in the modal
+            function showDetails(tid) {
+                // Set the TID value in the hidden input field
+                $('#reconcileTID').val(tid);
+    
+                // Fetch details using AJAX (replace '/get_details/' with your actual URL)
+                $.ajax({
+                    url: `/get_details/${tid}`,
+                    method: 'GET',
+                    success: function (data) {
+                        // Populate modal body with details
+                        $('#pendencyImage').attr('src', `${data.image_url}`);
+                        $('#modalTID').text(data.tid);
+                        $('#modalPID').text(data.pid);
+                        $('#modalDescription').text(data.description);
+                        $('#modalColor').text(data.color);
+                        $('#modalBrand').text(data.brand);
+    
+                        // Show the modal
+                        $('#detailsModal').modal('show');
+                    },
+                    error: function (error) {
+                        console.error('Error fetching details:', error);
+                    }
+                });
+            }
+    
+            // Attach the click event listener to the card
+            $('.card').click(function () {
+                const tid = $(this).data('tid');
+                showDetails(tid);
+            });
+    
+            // Handle close button click using JavaScript to prevent focus issues
+            $('#detailsModal').on('hidden.bs.modal', function () {
+                // Reset the modal content when hidden
+                $(' #pendencyImage, #modalTID, #modalDescription, #modalColor, #modalBrand').empty();
+                // Clear the TID value in the hidden input field
+                $('#reconcileTID').val('');
+            });
+    
+            // Reconciliation button click
+            $('#detailsModal').on('click', '.btn-reconcile-now', function () {
+                const tid = $('#reconcileTID').val();
+                const uuid = YOUR_UUID_VARIABLE;  // Replace YOUR_UUID_VARIABLE with the actual UUID
+    
+                // Make AJAX request for reconciliation
+                $.ajax({
+                    url: `/reconcile_orphan/${tid}`,
+                    method: 'POST',
+                    data: { uuid: uuid },  // Pass the UUID as part of the data
+                    success: function (data) {
+                        console.log('Reconciliation successful:', data);
+                        $('#detailsModal').modal('hide');
+                    },
+                    error: function (error) {
+                        console.error('Error during reconciliation:', error);
+                    }
+                });
+            });
+        });
+    </script>
+
+</body>
+
+{% endblock %}
+ 

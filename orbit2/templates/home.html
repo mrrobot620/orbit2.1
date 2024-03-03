@@ -1,0 +1,75 @@
+{% extends 'base.html' %} 
+{% load static %}
+{% block content %}
+  <style>
+    .card:hover {
+      transform: scale(1.05);
+      transition: transform 0.3s ease;
+    }
+
+    .card {
+      text-decoration: none;
+      color: black; 
+    }
+
+    .card img {
+      transition: filter 0.3s ease; /* Add a smooth transition for the filter property */
+    }
+
+    .card:hover img {
+      filter: blur(1.5px); /* Apply a blur effect on hover */
+    }
+
+    /* Center the cards */
+    .center-cards {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      height: 65vh; /* Adjust the height to your preference */
+    }
+
+    /* Center the button */
+    .center-button {
+      display: flex;
+      justify-content: center;
+      align-items: center;
+      margin-top: 20px; /* Adjust the margin as needed */
+    }
+
+    .btn {
+        background-color: #212529;
+        border-color: #212529;
+    }
+  </style>
+
+  <div class="center-cards">
+    <div class="container">
+      <div class="row">
+        <div class="col-sm">
+            <div class="card mt-5" style="width: 23rem;">
+              <img class="card-img-top" src="{% static 'blackhole.jpeg' %}" alt="Card image cap">
+              <div class="center-button">
+                <a href="{% url 'add_orphan' %}" class="btn btn-primary btn-lg mb-3">Add Orphan</a>
+              </div>
+            </div>
+        </div>
+        <div class="col-sm">
+            <div class="card mt-5" style="width: 23rem;">
+              <img class="card-img-top" src="{% static 'reconcile.jpeg' %}" alt="Card image cap">
+              <div class="center-button">
+                <a href="{% url 'search' %}" class="btn btn-primary btn-lg mb-3">Reconcile Orphan</a>
+              </div>
+            </div>
+        </div>
+        <div class="col-sm">
+            <div class="card mt-5" style="width: 23rem;">
+              <img class="card-img-top" src="{% static 'Spaceship.png' %}" alt="Card image cap">
+              <div class="center-button">
+                <a href="{% url 'db' %}" class="btn btn-primary btn-lg mb-3">View DB</a>
+              </div>
+            </div>
+        </div> 
+      </div>
+    </div>
+  </div>
+{% endblock %}
