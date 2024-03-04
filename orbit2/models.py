@@ -20,6 +20,7 @@ class Pendency(models.Model):
     itm_id = models.CharField(max_length=255)
     tid = models.CharField(max_length=255)
     features = models.BinaryField(null=True , blank=True)
+    related_pids = models.ManyToManyField('self' , blank=True)
 
 
     def save(self, *args, **kwargs):

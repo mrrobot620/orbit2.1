@@ -280,7 +280,6 @@ def download_image(image_url, filename):
         print(f"Failed to download image. Status code: {response.status_code} Filename: {filename}")
     
 
-
 def download_tracking_page(id):
     uploaded_ids = []
     regex_pattern = r'\b[A-Z0-9]{16}\b'
@@ -295,6 +294,7 @@ def download_tracking_page(id):
             raw_api = api.json()
             images_link = extract_images_info(raw_api)
             itm_id = raw_api['data']['relationships']['ITEMIZATION']['DEFAULT'][0]['archaicId']
+            related_pids = raw_api['data']['relationships']["ITEMIZATION"]['DEFAULT'][0]['relatedEntities']
             metadata = raw_api.get("metadata", {})
             product_attributes1 = metadata.get("productAttributes", {})
             vertical = product_attributes1.get("vertical", "")
@@ -332,7 +332,15 @@ def download_tracking_page(id):
                             vertical=vertical,
                             image=f"{id}.jpg"
                         )
-                        uploaded_ids.append(id) 
+                        uploaded_ids.append(id)
+                        for related_pid in related_pids:
+                            if related_pid not in uploaded_ids:
+                                related_product, created = Pendency.objects.get_or_create(pid=related_pid)
+                                if created:
+                                    print(f"Related product with PID {related_pid} created.")
+                                else:
+                                    print(f"Related product with PID {related_pid} already exists.")
+                                product.related_pids.add(related_product)
                     except Exception as e:
                         print(f"Error saving product to the database: {e}")
             else:
@@ -368,8 +376,14 @@ def search_view(request):
         queryset = Pendency.objects.all()
         # added this to fast forward the search , if pids matches from the result of google search
         if lens_pids is not None:
-            filter_condition = Q(pid__in=lens_pids) | Q(itm_id__in=lens_pids)
-            matching_pids = queryset.filter(filter_condition).values_list('pid', flat=True)
+            lens_pids_set = set(lens_pids)
+            queryset = Pendency.objects.annotate(
+                matched_pid_itm=Q(pid__in=lens_pids_set) | Q(itm_id__in=lens_pids_set)
+             )
+            
+            queryset = queryset.filter(related_pids__pid__in=lens_pids_set)
+
+            matching_pids = set(queryset.values_list('tid', flat=True))
             print(f"matching pids: ==  {matching_pids}")
             if matching_pids:
                 if uploaded_image:
@@ -601,12 +615,12 @@ def extract_pid():
         return pid_matches
 
 
-# login_flo()
-# select_facility()
-# session_cookie = driver.get_cookies()
-# print(session_cookie)
-# selenium_user_agent = driver.execute_script("return navigator.userAgent;")
-# print(selenium_user_agent)
-# session.headers.update({"user-agent": selenium_user_agent})
-# for cookie in driver.get_cookies():
-#     session.cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'])
+login_flo()
+select_facility()
+session_cookie = driver.get_cookies()
+print(session_cookie)
+selenium_user_agent = driver.execute_script("return navigator.userAgent;")
+print(selenium_user_agent)
+session.headers.update({"user-agent": selenium_user_agent})
+for cookie in driver.get_cookies():
+    session.cookies.set(cookie['name'], cookie['value'], domain=cookie['domain'])
