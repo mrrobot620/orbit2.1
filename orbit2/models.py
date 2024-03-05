@@ -20,7 +20,7 @@ class Pendency(models.Model):
     itm_id = models.CharField(max_length=255)
     tid = models.CharField(max_length=255)
     features = models.BinaryField(null=True , blank=True)
-    related_pids = models.ManyToManyField('self' , blank=True)
+    related_pids = models.ManyToManyField("RelatedPids")
 
 
     def save(self, *args, **kwargs):
@@ -90,4 +90,8 @@ class ReconciliationRecord(models.Model):
         return f"{self.user.username} reconciled TID {self.tid} at {self.reconciled_at}"
 
 
+class RelatedPids(models.Model):
+    pid = models.TextField(null=True, blank=True)
 
+    def __str__(self):
+        return self.pid

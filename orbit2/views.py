@@ -279,7 +279,6 @@ def download_image(image_url, filename):
     else:
         print(f"Failed to download image. Status code: {response.status_code} Filename: {filename}")
     
-
 def download_tracking_page(id):
     uploaded_ids = []
     regex_pattern = r'\b[A-Z0-9]{16}\b'
@@ -335,12 +334,15 @@ def download_tracking_page(id):
                         uploaded_ids.append(id)
                         for related_pid in related_pids:
                             if related_pid not in uploaded_ids:
-                                related_product, created = Pendency.objects.get_or_create(pid=related_pid)
-                                if created:
-                                    print(f"Related product with PID {related_pid} created.")
-                                else:
-                                    print(f"Related product with PID {related_pid} already exists.")
-                                product.related_pids.add(related_product)
+                                try:
+                                    related_product, created = Pendency.objects.get_or_create(pid=related_pid)
+                                    if created:
+                                        print(f"Related product with PID {related_pid} created.")
+                                    else:
+                                        print(f"Related product with PID {related_pid} already exists.")
+                                    product.related_pids.add(related_product)
+                                except Exception as e:
+                                    print(f"Error adding related product with PID {related_pid}: {e}")
                     except Exception as e:
                         print(f"Error saving product to the database: {e}")
             else:
@@ -445,14 +447,23 @@ def search_view(request):
 def process_image(uploaded_image_path, pendency, results, unique_filename, search_uuid):
     pendency_image_path = pendency.features
     try:
-        existing_pendency = Pendency.objects.get(features=pendency_image_path)
+        existing_pendencies = Pendency.objects.filter(features=pendency_image_path)
+        if existing_pendencies.exists():
+            for existing_pendency in existing_pendencies:
+                similarity = find_similar_images(uploaded_image_path, pendency_image_path)
+                print(f"Similarity for TID {pendency.tid}: {similarity}")
+                results.append({
+                    'tid': pendency.tid, 
+                    'pid': pendency.pid, 
+                    'similarity': similarity, 
+                    'uploaded_image_name': unique_filename, 
+                    'pendency_image_name': pendency.image.name, 
+                    "uuid": search_uuid
+                })
+        else:
+            print(f"Skipping pendency {pendency.tid} due to missing image file.")
     except Pendency.DoesNotExist:
         print(f"Skipping pendency {pendency.tid} due to missing image file.")
-        return
-
-    similarity = find_similar_images(uploaded_image_path, pendency_image_path)
-    print(f"Similarity for TID {pendency.tid}: {similarity}")
-    results.append({'tid': pendency.tid, 'pid':pendency.pid, 'similarity': similarity, 'uploaded_image_name': unique_filename, 'pendency_image_name': pendency.image.name ,  "uuid":search_uuid})
 
 
 def keyword_query(keywords):
@@ -596,7 +607,7 @@ def extract_pid():
     pattern = r'pid=([A-Za-z0-9]+)&'
     pattern2 = r'itm([A-Za-z0-9]+)'
     pid_matches = []
-    while not pid_matches and time.time() - start_time < 1:
+    while not pid_matches and time.time() - start_time < 10:
         pid_matches = []
         for link in filtered_links:
             pid_matches.extend(re.findall(pattern, link))
