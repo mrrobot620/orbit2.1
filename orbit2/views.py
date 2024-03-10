@@ -77,7 +77,7 @@ prefs = {
     'directory_upgrade': True
 }
 op.add_experimental_option('prefs' , prefs)
-driver = webdriver.Chrome(executable_path=r"C:\Users\abhishek.h1.FKIPL\Downloads\orbit-Prod\chromedriver.exe", options=op)
+driver = webdriver.Chrome(options=op)
 
 inception_model = InceptionV3(weights='imagenet')
 model = VGG16(weights='imagenet', include_top=False)
@@ -369,21 +369,15 @@ def search_view(request):
 
         query_keywords = keywords[0].split(",")
 
-        if not (uploaded_image and (brand or vertical)):
+        if not (uploaded_image):
             print(f"Vertical: {vertical}, Brand: {brand} , Keywords:  {query_keywords} , image: {uploaded_image}")
             return render(request, 'search.html', {'results': results, 'unique_verticals': unique_verticals, 'error_message': 'Invalid input'})
 
         queryset = Pendency.objects.all()
         # added this to fast forward the search , if pids matches from the result of google search
         if lens_pids is not None:
-            lens_pids_set = set(lens_pids)
-            queryset = Pendency.objects.annotate(
-                matched_pid_itm=Q(pid__in=lens_pids_set) | Q(itm_id__in=lens_pids_set)
-             )
-            
-            queryset = queryset.filter(related_pids__pid__in=lens_pids_set)
-
-            matching_pids = set(queryset.values_list('tid', flat=True))
+            filter_condition = Q(pid__in=lens_pids) | Q(itm_id__in=lens_pids)
+            matching_pids = queryset.filter(filter_condition).values_list('pid', flat=True)
             print(f"matching pids: ==  {matching_pids}")
             if matching_pids:
                 if uploaded_image:
@@ -445,7 +439,7 @@ def search_view(request):
             except Exception as e:
                 print(f"Error processing image: {e}")
                 return render(request, 'search.html', {'results': results, 'unique_verticals': unique_verticals, 'unique_brands': unique_brands, 'error_message': 'Error processing image'})
-
+        
     return render(request, 'search.html', {'results': results, 'unique_verticals': unique_verticals, 'error_message': 'No Results Found!'})
 
 def process_image(uploaded_image_path, pendency, results, unique_filename, search_uuid):
@@ -602,7 +596,7 @@ def extract_pid():
     pattern = r'pid=([A-Za-z0-9]+)&'
     pattern2 = r'itm([A-Za-z0-9]+)'
     pid_matches = []
-    while not pid_matches and time.time() - start_time < 20:
+    while not pid_matches and time.time() - start_time < 1:
         pid_matches = []
         for link in filtered_links:
             pid_matches.extend(re.findall(pattern, link))
